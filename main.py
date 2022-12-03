@@ -5,6 +5,11 @@ import os.path
 import numpy as np
 
 
+def statistical_information(reviews_df: pd.DataFrame, column_name: str) -> pd.Series:
+    """статистическая информация о столбце"""
+    return reviews_df[column_name].describe()
+
+
 def count_words_in_text(reviews_df: pd.DataFrame, column_name: str) -> list:
     """возвращает список с кол-вом слов в каждом отзыве"""
     count_words = []
@@ -60,7 +65,7 @@ def add_to_dataframe() -> pd.DataFrame:
     data_dict[column_name[0]] = name_class
     data_dict[column_name[1]] = text_reviews
     reviews_df = pd.DataFrame(data_dict)
-    print(reviews_df)
+
     print('Столбец: <', column_name[0], '> пустой? -',
           check_nan(reviews_df, column_name[0]))
     print('Столбец: <', column_name[1], '> пустой? -',
@@ -76,6 +81,8 @@ def main():
     count_word = count_words_in_text(reviews_df, 'Текст отзыва')
     reviews_df["Количество слов"] = pd.Series(count_word)
     print(reviews_df)
+    stat = statistical_information(reviews_df, 'Количество слов')
+    print(stat)
     print("finish")
 
 
