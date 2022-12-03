@@ -1,8 +1,38 @@
+from nltk.stem import WordNetLemmatizer
 import pandas as pd
 import csv
 import os
 import os.path
 import numpy as np
+import nltk
+
+nltk.download('omw-1.4')
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+
+
+def histogram(reviews_df: pd.DataFrame,  class_name: str, column_name: str) -> pd:
+    """гистограмма для слов"""
+    words = []
+    lemmatizer = WordNetLemmatizer()
+    lemmatized_output = []
+    for i in range(0, len(reviews_df.index)):
+        if reviews_df['Метка класса'][i] == class_name:
+            text = reviews_df.iloc[i]
+            text = text[column_name]
+            text = text.replace("\n", " ")
+            text = text.replace(",", "").replace(
+                ".", "").replace("?", "").replace("!", "")
+            text = text.lower()
+            for word in text.split():
+                words.append(word)
+
+            words.sort()
+    for word in words:
+        lemmatized_output.append(lemmatizer.lemmatize(word))
+    print(lemmatized_output)
+    print('dsd')
 
 
 def statistical_information(reviews_df: pd.DataFrame, column_name: str) -> pd.Series:
@@ -88,6 +118,15 @@ def add_to_dataframe() -> pd.DataFrame:
 
 def main():
     print("start")
+
+    wnl = WordNetLemmatizer()
+
+    # single word lemmatization examples
+    list1 = ['кошки', 'кошка', 'кошку', 'flying', 'smiling',
+             'driving', 'died', 'tried', 'feet']
+    for words in list1:
+        print(words + " ---> " + wnl.lemmatize(words))
+
     column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
     reviews_df = add_to_dataframe()
     count_word = count_words_in_text(reviews_df, column_name[1])
@@ -116,6 +155,8 @@ def main():
     print('Минимальное кол-во слов:', stat_bad['min'])
     print('Максимальное кол-во слов:', stat_bad['max'])
     print('Среднее кол-во слов:', stat_bad['mean'])
+
+    #histogram(reviews_df, 'good', column_name[1])
 
     print("finish")
 
