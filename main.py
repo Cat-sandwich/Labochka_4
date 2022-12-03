@@ -10,8 +10,14 @@ def statistical_information(reviews_df: pd.DataFrame, column_name: str) -> pd.Se
     return reviews_df[column_name].describe()
 
 
-def filtered_dataframe(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
-    """возвращает новый отфильтрованный dataframe"""
+def filtered_dataframe_class(reviews_df: pd.DataFrame, column_name: str, class_name: str) -> pd.DataFrame:
+    """возвращает новый отфильтрованный по метке класса dataframe"""
+    result = pd.DataFrame(reviews_df[reviews_df[column_name] == class_name])
+    return result
+
+
+def filtered_dataframe_word(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
+    """возвращает новый отфильтрованный по кол-вам слов dataframe"""
     result = pd.DataFrame(reviews_df[reviews_df[column_name] <= count])
     return result
 
@@ -89,8 +95,28 @@ def main():
     print(reviews_df)
     stat = statistical_information(reviews_df, column_name[2])
     print(stat)
-    filtered_reviews_df = filtered_dataframe(reviews_df, column_name[2], 100)
+    filtered_reviews_df = filtered_dataframe_word(
+        reviews_df, column_name[2], 100)
     print(filtered_reviews_df)
+    reviews_good_df = filtered_dataframe_class(
+        reviews_df, column_name[0], 'good')
+    reviews_bad_df = filtered_dataframe_class(
+        reviews_df, column_name[0], 'bad')
+    print(reviews_bad_df)
+    print(reviews_good_df)
+
+    stat_good = statistical_information(reviews_good_df, column_name[2])
+    print('\nДля положительных отзывов:\n')
+    print('Минимальное кол-во слов:', stat_good['min'])
+    print('Максимальное кол-во слов:', stat_good['max'])
+    print('Среднее кол-во слов:', stat_good['mean'])
+
+    stat_bad = statistical_information(reviews_bad_df, column_name[2])
+    print('\nДля отрицательных отзывов:\n')
+    print('Минимальное кол-во слов:', stat_bad['min'])
+    print('Максимальное кол-во слов:', stat_bad['max'])
+    print('Среднее кол-во слов:', stat_bad['mean'])
+
     print("finish")
 
 
