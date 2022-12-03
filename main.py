@@ -2,6 +2,23 @@ import pandas as pd
 import csv
 import os
 import os.path
+import numpy as np
+
+
+def count_words_in_text(reviews_df: pd.DataFrame, column_name: str) -> list:
+    """возвращает список с кол-вом слов в каждом отзыве"""
+    count_words = []
+    for i in range(0, len(reviews_df.index)):
+        text = reviews_df.iloc[i]
+        text = text[column_name]
+        text = text.replace("\n", " ")
+        text = text.replace(",", "").replace(
+            ".", "").replace("?", "").replace("!", "")
+        text = text.lower()
+        words = text.split()
+        words.sort()
+        count_words.append(len(words))
+    return count_words
 
 
 def check_nan(reviews_df: pd.DataFrame, column_name: str) -> bool:
@@ -23,7 +40,7 @@ def add_to_list(txt_name: list, text_reviews: list, name_class: list) -> list:
     return text_reviews, name_class
 
 
-def add_to_dataframe() -> None:
+def add_to_dataframe() -> pd.DataFrame:
     """записывает в dataframe текст отзыва и метку класса в два столбца"""
     filename = "dataset.csv"
     text_reviews = []
@@ -49,11 +66,16 @@ def add_to_dataframe() -> None:
     print('Столбец: <', column_name[1], '> пустой? -',
           check_nan(reviews_df, column_name[1]))
 
+    return reviews_df
+
 
 def main():
     print("start")
 
-    add_to_dataframe()
+    reviews_df = add_to_dataframe()
+    count_word = count_words_in_text(reviews_df, 'Текст отзыва')
+    reviews_df["Количество слов"] = pd.Series(count_word)
+    print(reviews_df)
     print("finish")
 
 
