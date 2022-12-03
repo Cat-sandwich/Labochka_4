@@ -6,8 +6,14 @@ import numpy as np
 
 
 def statistical_information(reviews_df: pd.DataFrame, column_name: str) -> pd.Series:
-    """статистическая информация о столбце"""
+    """возвращает статистическую информацию о столбце"""
     return reviews_df[column_name].describe()
+
+
+def filtered_dataframe(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
+    """возвращает новый отфильтрованный dataframe"""
+    result = pd.DataFrame(reviews_df[reviews_df[column_name] <= count])
+    return result
 
 
 def count_words_in_text(reviews_df: pd.DataFrame, column_name: str) -> list:
@@ -76,13 +82,15 @@ def add_to_dataframe() -> pd.DataFrame:
 
 def main():
     print("start")
-
+    column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
     reviews_df = add_to_dataframe()
-    count_word = count_words_in_text(reviews_df, 'Текст отзыва')
-    reviews_df["Количество слов"] = pd.Series(count_word)
+    count_word = count_words_in_text(reviews_df, column_name[1])
+    reviews_df[column_name[2]] = pd.Series(count_word)
     print(reviews_df)
-    stat = statistical_information(reviews_df, 'Количество слов')
+    stat = statistical_information(reviews_df, column_name[2])
     print(stat)
+    filtered_reviews_df = filtered_dataframe(reviews_df, column_name[2], 100)
+    print(filtered_reviews_df)
     print("finish")
 
 
