@@ -4,18 +4,19 @@ import os
 import os.path
 
 
+def check_nan(reviews_df: pd.DataFrame, column_name: str) -> bool:
+    """проверка на пустоту в dataframe"""
+    return reviews_df[column_name].isnull().values.any()
+
+
 def add_to_list(txt_name: list, text_reviews: list, name_class: list) -> list:
     """возвращает два списка: один с отзывами, другой с меткой класса"""
-    print(txt_name[1088])
-    print(txt_name[1])
     for i in range(0, 2000):
 
         f = open(txt_name[i], 'r', encoding='utf-8')
         data = f.read()
         text_reviews.append(data)
         class_name = str(txt_name[i]).split('\\')[1]
-        if i == 1001:
-            a = 0
         name_class.append(class_name)
         f.close()
 
@@ -25,11 +26,7 @@ def add_to_list(txt_name: list, text_reviews: list, name_class: list) -> list:
 def add_to_dataframe() -> None:
     """записывает в dataframe текст отзыва и метку класса в два столбца"""
     filename = "dataset.csv"
-
-    class_name = ['good', 'bad']
-
     text_reviews = []
-
     name_class = []
     txt_name = []
     data_dict = {}
@@ -42,10 +39,15 @@ def add_to_dataframe() -> None:
 
     text_reviews, name_class = add_to_list(txt_name, text_reviews, name_class)
 
-    data_dict['Метка класса'] = name_class
-    data_dict['Текст отзыва'] = text_reviews
+    column_name = ['Метка класса', 'Текст отзыва']
+    data_dict[column_name[0]] = name_class
+    data_dict[column_name[1]] = text_reviews
     reviews_df = pd.DataFrame(data_dict)
     print(reviews_df)
+    print('Столбец: <', column_name[0], '> пустой? -',
+          check_nan(reviews_df, column_name[0]))
+    print('Столбец: <', column_name[1], '> пустой? -',
+          check_nan(reviews_df, column_name[1]))
 
 
 def main():
