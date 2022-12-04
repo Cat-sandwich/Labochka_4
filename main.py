@@ -5,78 +5,16 @@ import os
 import os.path
 import numpy as np
 import nltk
-from textblob import TextBlob, Word
-import pymorphy2
+import spacy
+
+from nltk.corpus import stopwords
+
 
 nltk.download('omw-1.4')
 nltk.download('stopwords')
 nltk.download('wordnet')
-nltk.download('averaged_perceptron_tagger')
+nltk.download('averaged_perceptron_tagger_ru')
 nltk.download('punkt')
-
-
-def histogram(reviews_df: pd.DataFrame,  class_name: str, column_name: str) -> pd:
-    """гистограмма для слов"""
-    words = []
-
-    lemmatizer = pymorphy2.MorphAnalyzer()
-    lemmatized_output = []
-    for i in range(0, len(reviews_df.index)):
-        if reviews_df['Метка класса'][i] == class_name:
-            text = reviews_df.iloc[i]
-            text = text[column_name]
-            text = text.replace("\n", " ")
-            text = text.replace(",", "").replace(
-                ".", "").replace("?", "").replace("!", "")
-            text = text.lower()
-            for word in text.split():
-                words.append(word)
-
-            words.sort()
-    for word in words:
-        p = lemmatizer.parse(word)[0]
-        lemmatized_output.append(p.normal_form)
-
-    print(lemmatized_output)
-    print('dsd')
-
-
-def statistical_information(reviews_df: pd.DataFrame, column_name: str) -> pd.Series:
-    """возвращает статистическую информацию о столбце"""
-    return reviews_df[column_name].describe()
-
-
-def filtered_dataframe_class(reviews_df: pd.DataFrame, column_name: str, class_name: str) -> pd.DataFrame:
-    """возвращает новый отфильтрованный по метке класса dataframe"""
-    result = pd.DataFrame(reviews_df[reviews_df[column_name] == class_name])
-    return result
-
-
-def filtered_dataframe_word(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
-    """возвращает новый отфильтрованный по кол-вам слов dataframe"""
-    result = pd.DataFrame(reviews_df[reviews_df[column_name] <= count])
-    return result
-
-
-def count_words_in_text(reviews_df: pd.DataFrame, column_name: str) -> list:
-    """возвращает список с кол-вом слов в каждом отзыве"""
-    count_words = []
-    for i in range(0, len(reviews_df.index)):
-        text = reviews_df.iloc[i]
-        text = text[column_name]
-        text = text.replace("\n", " ")
-        text = text.replace(",", "").replace(
-            ".", "").replace("?", "").replace("!", "")
-        text = text.lower()
-        words = text.split()
-        words.sort()
-        count_words.append(len(words))
-    return count_words
-
-
-def check_nan(reviews_df: pd.DataFrame, column_name: str) -> bool:
-    """проверка на пустоту в dataframe"""
-    return reviews_df[column_name].isnull().values.any()
 
 
 def add_to_list(txt_name: list, text_reviews: list, name_class: list) -> list:
@@ -113,19 +51,73 @@ def add_to_dataframe() -> pd.DataFrame:
     data_dict[column_name[0]] = name_class
     data_dict[column_name[1]] = text_reviews
     reviews_df = pd.DataFrame(data_dict)
-
     return reviews_df
+
+
+def list_words(reviews_df: pd.DataFrame,  class_name: str, column_name: str) -> list:
+    """возвращает список слов"""
+    words = []
+
+    for i in range(0, len(reviews_df.index)):
+        if reviews_df['Метка класса'][i] == class_name:
+            text = reviews_df.iloc[i]
+            text = text[column_name]
+            text = text.replace("\n", " ")
+            text = text.replace(",", "").replace(
+                ".", "").replace("?", "").replace("!", "")
+            text = text.lower()
+            for word in text.split():
+                words.append(word)
+
+            words.sort()
+    lemmatizer = WordNetLemmatizer()  # создаём объект для WordNetLemmatizer
+    example_words = []
+    for w in words:
+        example_words.append(lemmatizer.lemmatize(w))
+    return example_words
+
+
+def statistical_information(reviews_df: pd.DataFrame, column_name: str) -> pd.Series:
+    """возвращает статистическую информацию о столбце"""
+    return reviews_df[column_name].describe()
+
+
+def filtered_dataframe_class(reviews_df: pd.DataFrame, column_name: str, class_name: str) -> pd.DataFrame:
+    """возвращает новый отфильтрованный по метке класса dataframe"""
+    result = pd.DataFrame(reviews_df[reviews_df[column_name] == class_name])
+    return result
+
+
+def filtered_dataframe_word(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
+    """возвращает новый отфильтрованный по кол-вам слов dataframe"""
+    result = pd.DataFrame(reviews_df[reviews_df[column_name] <= count])
+    return result
+
+
+def count_words_in_text(reviews_df: pd.DataFrame, column_name: str) -> list:
+    """возвращает список с кол-вом слов в каждом отзыве"""
+    count_words = []
+    for i in range(0, len(reviews_df.index)):
+        text = reviews_df.iloc[i]
+        text = text[column_name]
+        text = text.replace("\n", " ")
+        text = text.replace(",", "").replace(
+            ".", "").replace("?", "").replace("!", "").replace("'", "")
+        text = text.lower()
+        words = text.split()
+        words.sort()
+        count_words.append(len(words))
+    return count_words
+
+
+def check_nan(reviews_df: pd.DataFrame, column_name: str) -> bool:
+    """проверка на пустоту в dataframe"""
+    return reviews_df[column_name].isnull().values.any()
 
 
 def main():
     print("start")
-    morph = pymorphy2.MorphAnalyzer()
-    list_s = []
-    words = ['грустно', 'кошка', 'кошки', 'кошкам', 'альтернатив']
-    for word in words:
-        p = morph.parse(word)[0]
-        list_s.append(p.normal_form)
-    print(list_s)
+
     column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
     reviews_df = add_to_dataframe()
     count_word = count_words_in_text(reviews_df, column_name[1])
@@ -155,10 +147,15 @@ def main():
     print('Максимальное кол-во слов:', stat_bad['max'])
     print('Среднее кол-во слов:', stat_bad['mean'])
 
-    histogram(reviews_df, 'good', column_name[1])
+    #histogram(reviews_df, 'good', column_name[1])
 
     print("finish")
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
+    reviews_df = add_to_dataframe()
+
+    words = list_words(reviews_df, 'good', column_name[1])
+    print(words)
