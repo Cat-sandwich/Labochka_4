@@ -5,17 +5,21 @@ import os
 import os.path
 import numpy as np
 import nltk
+from textblob import TextBlob, Word
+import pymorphy2
 
 nltk.download('omw-1.4')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
+nltk.download('punkt')
 
 
 def histogram(reviews_df: pd.DataFrame,  class_name: str, column_name: str) -> pd:
     """гистограмма для слов"""
     words = []
-    lemmatizer = WordNetLemmatizer()
+
+    lemmatizer = pymorphy2.MorphAnalyzer()
     lemmatized_output = []
     for i in range(0, len(reviews_df.index)):
         if reviews_df['Метка класса'][i] == class_name:
@@ -30,7 +34,9 @@ def histogram(reviews_df: pd.DataFrame,  class_name: str, column_name: str) -> p
 
             words.sort()
     for word in words:
-        lemmatized_output.append(lemmatizer.lemmatize(word))
+        p = lemmatizer.parse(word)[0]
+        lemmatized_output.append(p.normal_form)
+
     print(lemmatized_output)
     print('dsd')
 
@@ -108,25 +114,18 @@ def add_to_dataframe() -> pd.DataFrame:
     data_dict[column_name[1]] = text_reviews
     reviews_df = pd.DataFrame(data_dict)
 
-    print('Столбец: <', column_name[0], '> пустой? -',
-          check_nan(reviews_df, column_name[0]))
-    print('Столбец: <', column_name[1], '> пустой? -',
-          check_nan(reviews_df, column_name[1]))
-
     return reviews_df
 
 
 def main():
     print("start")
-
-    wnl = WordNetLemmatizer()
-
-    # single word lemmatization examples
-    list1 = ['кошки', 'кошка', 'кошку', 'flying', 'smiling',
-             'driving', 'died', 'tried', 'feet']
-    for words in list1:
-        print(words + " ---> " + wnl.lemmatize(words))
-
+    morph = pymorphy2.MorphAnalyzer()
+    list_s = []
+    words = ['грустно', 'кошка', 'кошки', 'кошкам', 'альтернатив']
+    for word in words:
+        p = morph.parse(word)[0]
+        list_s.append(p.normal_form)
+    print(list_s)
     column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
     reviews_df = add_to_dataframe()
     count_word = count_words_in_text(reviews_df, column_name[1])
@@ -156,7 +155,7 @@ def main():
     print('Максимальное кол-во слов:', stat_bad['max'])
     print('Среднее кол-во слов:', stat_bad['mean'])
 
-    #histogram(reviews_df, 'good', column_name[1])
+    histogram(reviews_df, 'good', column_name[1])
 
     print("finish")
 
