@@ -3,18 +3,67 @@ import pandas as pd
 import csv
 import os
 import os.path
-import numpy as np
-import nltk
-import spacy
-
+import pymorphy2
+import regex as re
 from nltk.corpus import stopwords
 
 
-nltk.download('omw-1.4')
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('averaged_perceptron_tagger_ru')
-nltk.download('punkt')
+def unic_word(word_list: list) -> dict:
+    """подсчет повторяющихся слов"""
+    word_dict = dict
+    for words in word_list:
+        if words in word_dict.keys():
+            word_dict[words] += 1
+        else:
+            word_dict[words] = 1
+    return word_dict
+
+
+def histogram(reviews_df: pd.DataFrame, class_name: str):
+    print('fhjd')
+
+
+def listtt(doc) -> list:
+    """лемматизация слов по метке класса"""
+    patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
+    stopwords_ru = stopwords.words("russian")
+    morph = pymorphy2.MorphAnalyzer()
+    doc = re.sub(patterns, ' ', doc)
+    tokens = []
+    functors_pos = {'CONJ', 'PREP', 'NPRO', 'PRCL'}
+    for token in doc.split():
+        part_speech = pymorphy2.MorphAnalyzer().parse(token)[0].tag.POS
+        if token and token not in stopwords_ru and part_speech not in functors_pos:
+            token = token.strip()
+            token = morph.normal_forms(token)[0]
+
+            tokens.append(token)
+            print(len(tokens))
+        if len(tokens) > 110:
+            print('ff')
+    return tokens
+
+
+def lemmatizer_list(reviews_df: pd.DataFrame, column_name: str, class_name: str) -> list:
+    """лемматизация слов по метке класса"""
+    patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
+    stopwords_ru = stopwords.words("russian")
+    lemma = pymorphy2.MorphAnalyzer()
+    output_lemma = []
+    functors_pos = {'CONJ', 'PREP', 'NPRO', 'PRCL'}
+    for i in range(0, len(reviews_df)):
+        if reviews_df['Метка класса'][i] == class_name:
+
+            for word in reviews_df[column_name][i].split():
+
+                word = re.sub(r'[^\pL\p{Space}]', '', word).lower()
+                part_speech = pymorphy2.MorphAnalyzer().parse(word)[0].tag.POS
+                if part_speech not in functors_pos and word and word not in stopwords_ru:
+                    # print(word)
+                    output_lemma.append(lemma.parse(word)[0].normal_form)
+
+        print('------   ', i,  ' ------')
+    return output_lemma
 
 
 def add_to_list(txt_name: list, text_reviews: list, name_class: list) -> list:
@@ -70,11 +119,8 @@ def list_words(reviews_df: pd.DataFrame,  class_name: str, column_name: str) -> 
                 words.append(word)
 
             words.sort()
-    lemmatizer = WordNetLemmatizer()  # создаём объект для WordNetLemmatizer
-    example_words = []
-    for w in words:
-        example_words.append(lemmatizer.lemmatize(w))
-    return example_words
+
+    return words
 
 
 def statistical_information(reviews_df: pd.DataFrame, column_name: str) -> pd.Series:
@@ -157,5 +203,10 @@ if __name__ == "__main__":
     column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
     reviews_df = add_to_dataframe()
 
-    words = list_words(reviews_df, 'good', column_name[1])
-    print(words)
+   # words = list_words(reviews_df, 'good', column_name[1])
+    lemma_word = lemmatizer_list(reviews_df, column_name[1],  'good')
+    #words = listtt(reviews_df, column_name[1],  'good')
+    with open("lemma.txt", "w") as file:
+        print(*lemma_word, file=file, sep="\n")
+
+    print("hdjfs")
