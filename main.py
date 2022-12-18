@@ -7,16 +7,7 @@ import pymorphy2
 import regex as re
 from nltk.corpus import stopwords
 
-
-def unic_word(word_list: list) -> dict:
-    """подсчет повторяющихся слов"""
-    word_dict = dict
-    for words in word_list:
-        if words in word_dict.keys():
-            word_dict[words] += 1
-        else:
-            word_dict[words] = 1
-    return word_dict
+import asyncio
 
 
 def histogram(reviews_df: pd.DataFrame, class_name: str):
@@ -44,15 +35,15 @@ def listtt(doc) -> list:
     return tokens
 
 
-def lemmatizer_list(reviews_df: pd.DataFrame, column_name: str, class_name: str) -> list:
+def lemmatizer_list(reviews_df: pd.DataFrame, column_name: str, class_name: str, begin: int, end: int) -> list:
     """лемматизация слов по метке класса"""
-    patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
+    output_lemma = []
     stopwords_ru = stopwords.words("russian")
     lemma = pymorphy2.MorphAnalyzer()
-    output_lemma = []
+
     functors_pos = {'CONJ', 'PREP', 'NPRO', 'PRCL'}
-    for i in range(0, len(reviews_df)):
-        if reviews_df['Метка класса'][i] == class_name:
+    for i in range(begin, end):
+        if reviews_df['class_mark'][i] == class_name:
 
             for word in reviews_df[column_name][i].split():
 
@@ -61,8 +52,6 @@ def lemmatizer_list(reviews_df: pd.DataFrame, column_name: str, class_name: str)
                 if part_speech not in functors_pos and word and word not in stopwords_ru:
                     # print(word)
                     output_lemma.append(lemma.parse(word)[0].normal_form)
-
-        print('------   ', i,  ' ------')
     return output_lemma
 
 
@@ -96,7 +85,7 @@ def add_to_dataframe() -> pd.DataFrame:
 
     text_reviews, name_class = add_to_list(txt_name, text_reviews, name_class)
 
-    column_name = ['Метка класса', 'Текст отзыва']
+    column_name = ['class_mark', 'text_review', 'count_words']
     data_dict[column_name[0]] = name_class
     data_dict[column_name[1]] = text_reviews
     reviews_df = pd.DataFrame(data_dict)
@@ -136,7 +125,7 @@ def filtered_dataframe_class(reviews_df: pd.DataFrame, column_name: str, class_n
 
 def filtered_dataframe_word(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
     """возвращает новый отфильтрованный по кол-вам слов dataframe"""
-    result = pd.DataFrame(reviews_df[reviews_df[column_name] <= count])
+    result = pd.DataFrame(reviews_df[reviews_df[column_name] >= count])
     return result
 
 
@@ -198,15 +187,51 @@ def main():
     print("finish")
 
 
+async def print1(str1: str):
+    for i in range(0, 100):
+        print(str1 + str(i))
+        await asyncio.sleep(1)
+
+
+async def asynxron(reviews_df, column_name, output_lemma_1, output_lemma_2, loop):
+
+    task1 = loop.create_task(
+        lemmatizer_list(
+            reviews_df, column_name[1],  'good', 81, 82, output_lemma_1))
+    task2 = loop.create_task(
+        lemmatizer_list(
+            reviews_df, column_name[1],  'good', 660, 661, output_lemma_2))
+    await asyncio.wait([task1, task2])
+
+    # task1 = loop.create_task(
+    #     print1(
+    #         'мама мыла раму'))
+    # task2 = loop.create_task(
+    #     print1(
+    #         'папа мыл кота'))
+    # await asyncio.wait([task1, task2])
+    # print('fff')
+
+
+async def dasad(reviews_df, column_name):
+    output_lemma_1 = []
+    output_lemma_2 = []
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            asynxron(reviews_df, column_name, output_lemma_1, output_lemma_2, loop))
+    except:
+        pass
+    return output_lemma_1 + output_lemma_2
+
 if __name__ == "__main__":
     # main()
     column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
     reviews_df = add_to_dataframe()
 
    # words = list_words(reviews_df, 'good', column_name[1])
-    lemma_word = lemmatizer_list(reviews_df, column_name[1],  'good')
+    #lemma_word = lemmatizer_list(reviews_df, column_name[1],  'good')
     #words = listtt(reviews_df, column_name[1],  'good')
-    with open("lemma.txt", "w") as file:
-        print(*lemma_word, file=file, sep="\n")
+    dasad(reviews_df, column_name)
 
     print("hdjfs")
