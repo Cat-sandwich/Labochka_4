@@ -145,7 +145,7 @@ def filtered_dataframe_class(reviews_df: pd.DataFrame, column_name: str, class_n
 
 def filtered_dataframe_word(reviews_df: pd.DataFrame, column_name: str, count: int) -> pd.DataFrame:
     """возвращает новый отфильтрованный по кол-вам слов dataframe"""
-    result = pd.DataFrame(reviews_df[reviews_df[column_name] >= count])
+    result = pd.DataFrame(reviews_df[reviews_df[column_name] <= count])
     return result
 
 
