@@ -6,33 +6,53 @@ import os.path
 import pymorphy2
 import regex as re
 from nltk.corpus import stopwords
+from pymystem3 import Mystem
 
 import asyncio
 
 
-def histogram(reviews_df: pd.DataFrame, class_name: str):
-    print('fhjd')
+def pos(word, morth=pymorphy2.MorphAnalyzer()):
+    "возвращает часть речи"""
+    return morth.parse(word)[0].tag.POS
 
 
-def listtt(doc) -> list:
-    """лемматизация слов по метке класса"""
-    patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
-    stopwords_ru = stopwords.words("russian")
-    morph = pymorphy2.MorphAnalyzer()
-    doc = re.sub(patterns, ' ', doc)
-    tokens = []
-    functors_pos = {'CONJ', 'PREP', 'NPRO', 'PRCL'}
-    for token in doc.split():
-        part_speech = pymorphy2.MorphAnalyzer().parse(token)[0].tag.POS
-        if token and token not in stopwords_ru and part_speech not in functors_pos:
-            token = token.strip()
-            token = morph.normal_forms(token)[0]
+def strip_words(words: str) -> str:
+    words_upd = list()
 
-            tokens.append(token)
-            print(len(tokens))
-        if len(tokens) > 110:
-            print('ff')
-    return tokens
+    for word in words:
+        word = re.sub(r'[^\pL\p{Space}]', '', word).lower()
+        if word != '':
+            words_upd.append(word)
+    return words_upd
+
+
+def lemmatize_for_class_mark(reviews_df: pd.DataFrame, class_mark: str) -> list:
+    """функция обрабатывающая слова из dataframe по метке класса"""
+    reviews_class_mark_df = filtered_dataframe_class(
+        reviews_df, 'class_mark', class_mark)
+    return lemmatize(reviews_class_mark_df, 'text_review')
+
+
+def lemmatize(reviews_df: pd.DataFrame, column_name: str) -> list:
+    """возвращает список лемматизированных слов"""
+    text_nomalized = str()
+
+    for i in range(1, len(reviews_df.index)):
+
+        text = reviews_df.iloc[i]
+        text = text[column_name]
+        words = text.split()
+        words = strip_words(words)
+
+        for i in range(0, len(words)):
+            text_nomalized += words[i]
+            text_nomalized += ' '
+
+    m = Mystem()
+    lemmas = m.lemmatize(text_nomalized)
+
+    lemmas_res = strip_words(lemmas)
+    return lemmas_res
 
 
 def lemmatizer_list(reviews_df: pd.DataFrame, column_name: str, class_name: str, begin: int, end: int) -> list:
@@ -203,15 +223,6 @@ async def asynxron(reviews_df, column_name, output_lemma_1, output_lemma_2, loop
             reviews_df, column_name[1],  'good', 660, 661, output_lemma_2))
     await asyncio.wait([task1, task2])
 
-    # task1 = loop.create_task(
-    #     print1(
-    #         'мама мыла раму'))
-    # task2 = loop.create_task(
-    #     print1(
-    #         'папа мыл кота'))
-    # await asyncio.wait([task1, task2])
-    # print('fff')
-
 
 async def dasad(reviews_df, column_name):
     output_lemma_1 = []
@@ -226,12 +237,11 @@ async def dasad(reviews_df, column_name):
 
 if __name__ == "__main__":
     # main()
-    column_name = ['Метка класса', 'Текст отзыва', 'Количество слов']
+    column_name = ['class_mark', 'text_review', 'count_words']
     reviews_df = add_to_dataframe()
 
    # words = list_words(reviews_df, 'good', column_name[1])
     #lemma_word = lemmatizer_list(reviews_df, column_name[1],  'good')
     #words = listtt(reviews_df, column_name[1],  'good')
-    dasad(reviews_df, column_name)
-
+    word_list = lemmatize_for_class_mark(reviews_df, 'good')
     print("hdjfs")
